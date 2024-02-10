@@ -1,0 +1,183 @@
+---
+title: "Лабораторна робота 2"
+output: html_notebook
+---
+
+
+Перш за все, встановимо та приєднаємо необхідні пакети.
+
+```{R}
+install.packages("data.table")
+install.packages("dplyr")
+library(data.table)
+library(dplyr)
+```
+
+Далі, встановлення робочої директорії.
+
+```{R}
+setwd('/Users/v.zusko/Desktop/r/lab-2')
+```
+
+Завантажимо базові дані (`NEI`, `SCC`).
+
+```{R}
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+```
+
+Об'єднаємо дані в один датафрейм.
+
+```{R}
+merged_data <- inner_join(NEI, SCC, by = "SCC")
+```
+
+Проаналізуємо чи зменшилися загальні викиди PM2.5 у Сполучених Штатах з 1999 по 2008 рік. Для цього використаємо функцію `filter` для вибору даних за вказаний період, а потім обчислимо загальні викиди PM2.5 для кожного року. Нанесемо результати на графік.
+
+```{R}
+filtered_data <- filter(merged_data, year >= 1999 & year <= 2008)
+pm25_by_year <- summarize(group_by(filtered_data, year), total_pm25 = sum(Emissions))
+
+
+plot(
+  pm25_by_year$year, 
+  pm25_by_year$total_pm25, 
+  type = "b", 
+  xlab = "Рік", 
+  ylab = "Загальні викиди PM2.5",
+  main = "Загальні викиди PM2.5 в США (1999-2008)"
+)
+```
+
+Проаналізуємо чи зменшилися загальні викиди PM2.5 у місті Балтимор, штат Меріленд з 1999 по 2008 рік. Нанесемо результати на графік.
+
+```{R}
+baltimore_fips = "24510"
+baltimore_data <- filter(merged_data, fips == baltimore_fips & year >= 1999 & year <= 2008)
+baltimore_pm25_by_year <- summarize(group_by(baltimore_data, year), total_pm25 = sum(Emissions))
+
+plot(
+  baltimore_pm25_by_year$year, 
+  baltimore_pm25_by_year$total_pm25, 
+  type = "b", 
+  xlab = "Рік", 
+  ylab = "Загальні викиди PM2.5",
+  main = "Загальні викиди PM2.5 в Балтиморі, Меріленд (1999-2008)"
+)
+```
+
+Додамо груповані за роком та джерелом дані. Для кожного типу джерела побудуємо графік.
+
+```{R}
+baltimore_pm25_by_source_and_year <- summarize(
+  group_by(baltimore_data, type, year), 
+  baltimore_total_pm25 = sum(Emissions), 
+  .groups = "drop"
+)
+
+for (source_type in unique(baltimore_pm25_by_source_and_year$type)) {
+  baltimore_subset_data <- filter(baltimore_pm25_by_source_and_year, type == source_type)
+  
+  plot(
+    baltimore_subset_data$year, 
+    baltimore_subset_data$baltimore_total_pm25, 
+    type = "b", 
+    xlab = "Рік", 
+    ylab = "Загальні викиди PM2.5",
+    main = paste("Загальні викиди PM2.5 за типом джерела у Балтиморі:", source_type)
+  )
+}
+```
+
+Додатково, визначимо типи джерел, в яких спостерігалося зменшення і збільшення викидів у Балтиморі.
+
+```{R}
+baltimore_decreasing_sources <- baltimore_pm25_by_source_and_year %>%
+  group_by(type) %>%
+  summarize(
+    min_year = min(year), 
+    max_year = max(year), 
+    total_change = sum(diff(baltimore_total_pm25))
+  ) %>%
+  filter(total_change < 0)
+
+cat("Типи джерел, де спостерігалося зменшення викидів:", baltimore_decreasing_sources$type, "\n")
+
+baltimore_increasing_sources <- baltimore_pm25_by_source_and_year %>%
+  group_by(type) %>%
+  summarize(
+    min_year = min(year), 
+    max_year = max(year), 
+    total_change = sum(diff(baltimore_total_pm25))
+  ) %>%
+  filter(total_change > 0)
+
+cat("Типи джерел, де спостерігалося зростання викидів:", baltimore_increasing_sources$type, "\n")
+```
+
+Проаналізуємо викиди PM2.5 від джерел, пов’язаних зі спалюванням вугілля в США з 1999 по 2008 рік. Нанесемо результати на графік.
+
+```{R}
+coal_data <- filter(merged_data, grepl("coal", merged_data$Short.Name, ignore.case = TRUE))
+coal_data <- filter(coal_data, year >= 1999 & year <= 2008)
+
+coal_pm25_by_year <- summarize(group_by(coal_data, year), total_pm25 = sum(Emissions))
+
+plot(
+  coal_pm25_by_year$year, 
+  coal_pm25_by_year$total_pm25, 
+  type = "b", 
+  xlab = "Рік", 
+  ylab = "Загальні викиди PM2.5 від джерел, пов’язаних зі спалюванням вугілля",
+  main = "Загальні викиди PM2.5 від джерел, пов’язаних зі спалюванням вугілля в США (1999-2008)"
+)
+```
+
+Проаналізуємо викиди PM2.5 від джерел автотранспорту в місті Балтимор з 1999 по 2008 рік. Для цього використаємо функцію `filter` для вибору даних за вказаний період та вказаним типом джерела, а потім обчислимо загальні викиди PM2.5 для кожного року. Нанесемо результати на графік.
+
+```{R}
+vehicle_emissions_baltimore_data <- filter(baltimore_data, grepl("vehicle", baltimore_data$Short.Name, ignore.case = TRUE))
+
+vehicle_emissions_baltimore_pm25_by_year <- summarize(
+  group_by(vehicle_emissions_baltimore_data, year), 
+  baltimore_total_pm25 = sum(Emissions)
+)
+
+plot(
+  vehicle_emissions_baltimore_pm25_by_year$year, 
+  vehicle_emissions_baltimore_pm25_by_year$baltimore_total_pm25, 
+  type = "b", 
+  xlab = "Рік", 
+  ylab = "Загальні викиди PM2.5 від джерел автотранспорту",
+  main = "Загальні викиди PM2.5 від джерел автотранспорту в місті Балтимор (1999-2008)"
+)
+```
+
+Порівняємо викиди PM2.5 від джерел автотранспорту в місті Балтимор та Лос-Анджелес з 1999 по 2008 рік. Нанесемо результати на графік. Також, виведемо результати порівняння.
+
+```{R}
+los_angeles_fips = "06037"
+los_angeles_data <- filter(merged_data, fips == los_angeles_fips & year >= 1999 & year <= 2008)
+vehicle_emissions_los_angeles_data <- filter(los_angeles_data, grepl("vehicle", los_angeles_data$Short.Name, ignore.case = TRUE))
+vehicle_emissions_los_angeles_pm25_by_year <- summarize(
+  group_by(vehicle_emissions_los_angeles_data, year), 
+  los_angeles_total_pm25 = sum(Emissions)
+)
+
+plot(
+  vehicle_emissions_los_angeles_pm25_by_year$year, 
+  vehicle_emissions_los_angeles_pm25_by_year$los_angeles_total_pm25, 
+  type = "b", 
+  xlab = "Рік", 
+  ylab = "Загальні викиди PM2.5 від джерел автотранспорту",
+  main = "Загальні викиди PM2.5 від джерел автотранспорту в місті Лос-Анджелес (1999-2008)"
+)
+
+comparison <- mutate(
+  inner_join(vehicle_emissions_baltimore_pm25_by_year, vehicle_emissions_los_angeles_pm25_by_year, by = "year"),
+  change_baltimore = baltimore_total_pm25 - lag(baltimore_total_pm25),
+  change_los_angeles = los_angeles_total_pm25 - lag(los_angeles_total_pm25)
+)
+
+print(comparison)
+```
