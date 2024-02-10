@@ -1,0 +1,87 @@
+---
+title: "Лабораторна робота 1"
+output: html_notebook
+---
+
+Перш за все, встановимо та приєднаємо необхідні пакети.
+
+```{R}
+install.packages("data.table")
+library(data.table)
+```
+
+Далі, встановлення робочої директорії.
+
+```{R}
+setwd('/Users/v.zusko/Desktop/r/lab-1')
+```
+
+Наступним кроком зчитаємо назви стовпців з файлу `features.txt`. Виконаємо фільтрацію стовпців, що містять середнє та стандартне відхилення.
+
+```{R}
+features <- fread("features.txt")[, V2]
+selected_features <- grep("-mean\\(\\)|-std\\(\\)", features)
+```
+
+Зчитаємо навчальний (`train/X_train.txt`) та тестовий набори даних (`test/X_test.txt`).
+
+```{R}
+train_data <- fread("train/X_train.txt")
+test_data <- fread("test/X_test.txt")
+```
+
+Об'єднаємо навчальний та тестовий набори даних. Встановимо коректні назви стовпців.
+
+```{R}
+combined_data <- rbind(train_data, test_data)
+setnames(combined_data, features)
+```
+
+Виберемо лише необхідні стовпці.
+
+```{R}
+selected_data <- combined_data[, selected_features, with = FALSE]
+```
+
+Перевіримо розмірність об'єднаного набору даних та назви стовпців.
+
+```{R}
+dim(selected_data)
+names(selected_data)
+```
+
+Зчитаємо мітки класів для навчального (`train/y_train.txt`) та тестового наборів даних (`test/y_test.txt`).
+
+```{R}
+train_labels <- fread("train/y_train.txt")
+test_labels <- fread("test/y_test.txt")
+```
+
+Об'єднаємо мітки класів для навчального та тестового наборів даних. Зчитаємо назви активностей з файлу `activity_labels.txt`.
+
+```{R}
+combined_labels <- rbind(train_labels, test_labels)
+activity_labels <- fread("activity_labels.txt")[, V2]
+combined_labels$activity <- activity_labels[combined_labels$V1]
+combined_labels <- combined_labels[, -"V1"]
+```
+
+Перевіримо розмірність об'єднаних міток класів та назви стовпців.
+
+```{R}
+dim(combined_labels)
+names(combined_labels)
+```
+
+Об'єднаємо набори даних та мітки класів.
+
+```{R}
+finalized_data <- cbind(selected_data, combined_labels)
+```
+
+Перевіримо розмірність об'єднаного набору даних та назви стовпців.
+
+```{R}
+dim(finalized_data)
+names(finalized_data)
+```
