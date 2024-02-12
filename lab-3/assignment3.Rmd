@@ -1,0 +1,98 @@
+---
+title: "Statistical Inference with Exponential Distributions"
+author: "Vlad, Dmytro, Dmytro"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: html_notebook
+---
+
+# Overview
+
+This report aims to investigate the properties of the exponential distribution and its relation to the Central Limit Theorem (CLT). We focus on the distribution of the means of 40 exponential distributions, with a rate parameter (λ) of 0.2, across 1000 simulations. The report explores the alignment of the sample means and variances with their theoretical counterparts and illustrates how the sample mean distribution conforms to a normal distribution, as predicted by the CLT.
+
+# Simulations
+
+The following R code is used to generate 1000 samples of 40 exponential distributions, each with a rate parameter of 0.2.
+
+```{r}
+lambda <- 0.2
+simulations <- replicate(1000, rexp(40, lambda))
+sample_means <- apply(simulations, 2, mean)
+```
+
+# **Sample Mean versus Theoretical Mean**
+
+We compare the sample mean of the simulated distributions to the theoretical mean of an exponential distribution.
+
+## **Theoretical Mean**
+
+The theoretical mean of an exponential distribution is 1/λ.
+
+```{r}
+theoretical_mean <- 1 / lambda
+theoretical_mean
+```
+
+## **Sample Mean**
+
+The sample mean is computed from our simulations.
+
+```{r}
+mean_of_sample_means <- mean(sample_means)
+mean_of_sample_means
+```
+
+**Histogram of Sample Means**
+
+The histogram below shows the distribution of sample means.
+
+```{r}
+hist(sample_means, main="Histogram of Sample Means", xlab="Sample Mean")
+```
+
+# **Sample Variance versus Theoretical Variance**
+
+The variance of the sample means is compared with the theoretical variance of the distribution.
+
+## **Theoretical Variance**
+
+The theoretical variance for the mean of 40 exponential distributions is (1/λ)\^2 / 40.
+
+```{r}
+theoretical_variance <- (1 / lambda)^2 / 40
+theoretical_variance
+```
+
+## **Sample Variance**
+
+The variance of the sample means is computed.
+
+```{r}
+sample_variance <- var(sample_means)
+sample_variance
+```
+
+# **Distribution**
+
+We examine whether the distribution of sample means is approximately normal.
+
+## **Histogram with Density**
+
+The histogram is overlaid with a density plot.
+
+```{r}
+hist(sample_means, main="Histogram of Sample Means with Density", xlab="Sample Mean", freq=FALSE)
+lines(density(sample_means), col="blue")
+```
+
+## **Q-Q Plot**
+
+A Q-Q plot is used to visually assess the normality.
+
+```{r}
+qqnorm(sample_means)
+qqline(sample_means, col="red")
+```
+
+## **Conclusion**
+
+The histogram and Q-Q plot suggest that the distribution of sample means is approximately normal, in accordance with the Central Limit Theorem. This demonstrates that even for non-normal distributions like the exponential distribution, the mean of a large number of samples will tend to follow a normal distribution.
