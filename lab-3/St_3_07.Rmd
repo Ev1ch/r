@@ -1,7 +1,5 @@
 ---
-title: "Statistical Inference with Exponential Distributions"
-author: "Vlad, Dmytro, Dmytro"
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+title: "Лабораторна робота 3"
 output: html_notebook
 ---
 
@@ -82,7 +80,7 @@ hist(sample_means, main="Histogram of Sample Means with Density", xlab="Sample M
 lines(density(sample_means), col="blue")
 ```
 
-## Q-Q Plot
+## Q-Q Графік
 
 Графік (Q-Q) використовується для візуальної оцінки нормальності.
 
