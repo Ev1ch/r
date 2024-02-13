@@ -1,0 +1,98 @@
+---
+title: "Statistical Inference with Exponential Distributions"
+author: "Vlad, Dmytro, Dmytro"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: html_notebook
+---
+
+# Overview
+
+Цей звіт має на меті дослідити властивості експоненціального розподілу та його відношення до Центральної Граничної Теореми (ЦГТ). Ми зосереджуємося на розподілі середніх значень 40 експоненціальних розподілів з параметром швидкості (λ) 0.2 через 1000 моделювань. Звіт досліджує відповідність середніх та дисперсій вибірок їх теоретичним аналогам і показує, як розподіл середнього значення вибірки відповідає нормальному розподілу, як передбачено ЦГТ.
+
+# Simulations
+
+Наступний код на мові R використовується для генерації 1000 вибірок з 40 експоненціальних розподілів, кожен з параметром швидкості 0.2.
+
+```{r}
+lambda <- 0.2
+simulations <- replicate(1000, rexp(40, lambda))
+sample_means <- apply(simulations, 2, mean)
+```
+
+# **Sample Mean versus Theoretical Mean**
+
+Ми порівнюємо середнє значення вибірки симульованих розподілів з теоретичним середнім значенням експоненціального розподілу.
+
+## **Theoretical Mean**
+
+Теоретичне середнє значення експоненціального розподілу дорівнює 1/λ.
+
+```{r}
+theoretical_mean <- 1 / lambda
+theoretical_mean
+```
+
+## **Sample Mean**
+
+Середнє значення вибірки обчислюється з наших симуляцій.
+
+```{r}
+mean_of_sample_means <- mean(sample_means)
+mean_of_sample_means
+```
+
+**Histogram of Sample Means**
+
+Гістограма нижче показує розподіл середніх значень вибірок.
+
+```{r}
+hist(sample_means, main="Histogram of Sample Means", xlab="Sample Mean")
+```
+
+# **Sample Variance versus Theoretical Variance**
+
+Дисперсія середніх значень вибірок порівнюється з теоретичною дисперсією розподілу.
+
+## **Theoretical Variance**
+
+Теоретична дисперсія для середнього значення 40 експоненціальних розподілів дорівнює (1/λ)\^2 / 40.
+
+```{r}
+theoretical_variance <- (1 / lambda)^2 / 40
+theoretical_variance
+```
+
+## **Sample Variance**
+
+Дисперсія середніх значень вибірок обчислюється як:
+
+```{r}
+sample_variance <- var(sample_means)
+sample_variance
+```
+
+# **Distribution**
+
+Ми перевіряємо, чи розподіл середніх значень вибірок приблизно нормальний.
+
+## **Histogram with Density**
+
+На гістограму накладено графік щільності.
+
+```{r}
+hist(sample_means, main="Histogram of Sample Means with Density", xlab="Sample Mean", freq=FALSE)
+lines(density(sample_means), col="blue")
+```
+
+## **Q-Q Plot**
+
+A Q-Q plot is used to visually assess the normality.
+
+```{r}
+qqnorm(sample_means)
+qqline(sample_means, col="red")
+```
+
+## **Conclusion**
+
+Гістограма та графік Q-Q підказують, що розподіл середніх значень вибірок приблизно нормальний, відповідно до Центральної Граничної Теореми. Це демонструє, що навіть для ненормальних розподілів, таких як експоненціальний розподіл, середнє значення великої кількості вибірок буде схильне до нормального розподілу.
